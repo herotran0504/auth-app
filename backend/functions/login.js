@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 const dynamoDB = new DynamoDBClient({region: 'us-east-1'});
 const JWT_SECRET = process.env.JWT_SECRET
 
-export const login = async (event) => {git a
+export const login = async (event) => {
     const {email, password} = JSON.parse(event.body);
 
     try {
