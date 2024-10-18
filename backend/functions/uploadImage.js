@@ -1,13 +1,13 @@
 // functions/uploadImage.js
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"; // Importing S3 client
-import { v4 as uuidv4 } from 'uuid';
+import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3"; // Importing S3 client
+import {v4 as uuidv4} from 'uuid';
 
-const s3 = new S3Client({ region: "us-east-1" }); // Update to your region
+const s3 = new S3Client({region: "us-east-1"}); // Update to your region
 const S3_BUCKET = "htran-image-stores"; // Your S3 bucket name
 
 export const handler = async (event) => {
-    const { email, imageBase64 } = JSON.parse(event.body);
+    const {email, imageBase64} = JSON.parse(event.body);
     const fileName = `${email}-profile-image-${uuidv4()}.png`; // Unique filename
 
     const buffer = Buffer.from(imageBase64, 'base64');

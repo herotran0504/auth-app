@@ -51,3 +51,11 @@ functions:
           path: login
           method: post
           cors: true
+
+  profile:
+    handler: functions/profile.userProfile
+    events:
+      - http:
+          path: profile
+          method: get
+          cors: true
