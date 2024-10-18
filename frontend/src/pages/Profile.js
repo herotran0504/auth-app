@@ -1,109 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import { useTheme } from '../context/ThemeContext'; // Import useTheme
+import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
 import '../App.css';
 
 const Profile = () => {
-    const theme = useTheme(); // Get the current theme
-    const [userData, setUserData] = useState(null);
-    const [loading, setLoading] = useState(true); // Loading state
-    const [newImage, setNewImage] = useState(null); // State for new image
-    const [uploading, setUploading] = useState(false); // State for uploading
+    const theme = useTheme();
+    const [userData, setUserData] = useState({ profileImage: '', name: '', email: '' });
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        const fetchProfile = async () => {
             try {
                 const token = localStorage.getItem('token');
-
                 const response = await axios.get('http://localhost:5050/dev/profile', {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-
                 setUserData(response.data);
-                setLoading(false);
             } catch (error) {
-                console.error('Error fetching profile data:', error);
-                setLoading(false);
+                console.error('Error fetching profile:', error);
             }
         };
 
-        fetchUserData();
+        fetchProfile();
     }, []);
 
-    const handleImageChange = (e) => {
-        setNewImage(e.target.files[0]); // Get the selected image
+    const handleFileChange = (event) => {
+        // Logic to handle file change
     };
 
-    const handleImageUpload = async () => {
-        if (!newImage) return; // If no new image selected, do nothing
-
-        setUploading(true); // Set uploading state
-
-        try {
-            const token = localStorage.getItem('token');
-
-            // Get a pre-signed URL from the backend
-            const response = await axios.post('http://localhost:5050/dev/get-presigned-url', {
-                filename: newImage.name,
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            const { url } = response.data; // Get the pre-signed URL
-
-            // Upload the image to S3 using the pre-signed URL
-            await axios.put(url, newImage, {
-                headers: {
-                    'Content-Type': newImage.type, // Set the content type
-                },
-            });
-
-            // After successful upload, fetch the updated profile data
-            const profileResponse = await axios.get('http://localhost:5050/dev/profile', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            setUserData(profileResponse.data); // Update user data
-            setNewImage(null); // Reset new image state
-        } catch (error) {
-            console.error('Error uploading image:', error);
-        } finally {
-            setUploading(false); // Reset uploading state
-        }
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        // Logic to update the image
     };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (!userData) {
-        return <div>No user data found.</div>;
-    }
 
     return (
         <div className="container">
             <h2 style={{ color: theme.primary }}>Profile</h2>
-            <div>
-                <img src={userData.profileImage} alt="Profile" width="100" />
-                <h3>Name: {userData.name}</h3>
-                <p>Email: {userData.email}</p>
+            <div style={{ textAlign: 'center' }}>
+                {userData.profileImage ? (
+                    <img
+                        src={userData.profileImage}
+                        alt="Profile"
+                        style={{
+                            width: '150px',
+                            height: '150px',
+                            borderRadius: '75px',
+                            objectFit: 'cover',
+                            border: `2px solid ${theme.primary}`,
+                        }}
+                    />
+                ) : (
+                    <div style={{ width: '150px', height: '150px', borderRadius: '75px', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        No Image
+                    </div>
+                )}
             </div>
-            <div>
-                <input type="file" onChange={handleImageChange} />
-                <button
-                    style={{ backgroundColor: theme.primary }}
-                    onClick={handleImageUpload}
-                    disabled={uploading} // Disable button while uploading
-                >
-                    {uploading ? 'Uploading...' : 'Change Image'}
-                </button>
-            </div>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Name:</label>
+                    <input type="text" value={userData.name} readOnly />
+                </div>
+                <div>
+                    <label>Email:</label>
+                    <input type="email" value={userData.email} readOnly />
+                </div>
+                <div>
+                    <label>Change Profile Image:</label>
+                    <input type="file" onChange={handleFileChange} />
+                </div>
+                <button style={{ backgroundColor: theme.primary }} type="submit">Update Image</button>
+            </form>
         </div>
     );
 };
