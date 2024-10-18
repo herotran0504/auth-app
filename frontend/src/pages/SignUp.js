@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signUpUser } from '../services/userService';
 import { useTheme } from '../context/ThemeContext';
+import { validateImage } from '../utils/imageValidation'; // Import the validation function
 import '../App.css';
 
 const SignUp = () => {
@@ -15,13 +16,23 @@ const SignUp = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageError, setImageError] = useState(null); // State for image error
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleFileChange = (e) => {
-    setFormData({ ...formData, profileImage: e.target.files[0] });
+    const file = e.target.files[0];
+    const validationErrors = validateImage(file); // Validate the image
+
+    if (validationErrors.length > 0) {
+      setImageError(validationErrors.join(' ')); // Set the image error message
+      setFormData({ ...formData, profileImage: null }); // Reset profile image
+    } else {
+      setImageError(null); // Clear any image error
+      setFormData({ ...formData, profileImage: file }); // Set profile image
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -30,6 +41,11 @@ const SignUp = () => {
 
     try {
       const { email, password, name, profileImage } = formData;
+
+      if (!profileImage) {
+        setImageError('Please select a profile image before signing up.');
+        return;
+      }
 
       await signUpUser({ email, password, name, profileImage });
 
@@ -45,7 +61,8 @@ const SignUp = () => {
   return (
       <div className="container">
         <h2 style={{ color: theme.primary }}>Sign Up</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error message */}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {imageError && <p style={{ color: 'red' }}>{imageError}</p>} {/* Display image error message */}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '20px' }}>
             <label>Name:</label>
@@ -83,6 +100,7 @@ const SignUp = () => {
                 type="file"
                 name="profileImage"
                 onChange={handleFileChange}
+                required
             />
           </div>
           <button

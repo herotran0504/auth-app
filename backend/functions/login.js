@@ -2,8 +2,9 @@ import {DynamoDBClient, GetItemCommand} from '@aws-sdk/client-dynamodb';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const dynamoDB = new DynamoDBClient({region: 'us-east-1'});
-const JWT_SECRET = process.env.JWT_SECRET
+const awsRegion = process.env.AWS_REGION;
+const dynamoDB = new DynamoDBClient({region: awsRegion});
+const jwtSecret = process.env.JWT_SECRET
 
 export const login = async (event) => {
     const {email, password} = JSON.parse(event.body);
@@ -31,7 +32,7 @@ export const login = async (event) => {
             };
         }
 
-        const token = jwt.sign({email: email}, JWT_SECRET, {expiresIn: '1h'});
+        const token = jwt.sign({email: email}, jwtSecret, {expiresIn: '1h'});
 
         return {
             statusCode: 200,

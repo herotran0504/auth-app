@@ -4,18 +4,19 @@ import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 
-const dynamoDB = new DynamoDBClient({region: 'us-east-1'});
-const s3 = new S3Client({region: 'us-east-1'});
+const bucketName = process.env.BUCKET_NAME
+const userTable = process.env.USERS_TABLE
+const awsRegion = process.env.AWS_REGION;
 
-const BucketName = process.env.BUCKET_NAME
-const TableName = process.env.USERS_TABLE
+const dynamoDB = new DynamoDBClient({region: awsRegion});
+const s3 = new S3Client({region: awsRegion});
 
 export const signup = async (event) => {
     const {email, password, name, fileName} = JSON.parse(event.body);
 
     try {
         const userCheckParams = {
-            TableName: TableName,
+            TableName: userTable,
             Key: {email: {S: email}}
         };
 
@@ -33,7 +34,7 @@ export const signup = async (event) => {
         const imageKey = `profile-images/${uuidv4()}_${fileName}`;
 
         const command = new PutObjectCommand({
-            Bucket: BucketName,
+            Bucket: bucketName,
             Key: imageKey,
             ContentType: 'image/jpeg',
         });
@@ -41,7 +42,7 @@ export const signup = async (event) => {
         const preSignedUrl = await getSignedUrl(s3, command, {expiresIn: 3600});
 
         const params = {
-            TableName: TableName,
+            TableName: userTable,
             Item: {
                 email: {S: email},
                 password: {S: hashedPassword},

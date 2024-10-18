@@ -2,20 +2,22 @@ import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import jwt from 'jsonwebtoken';
 
-const dynamoDB = new DynamoDBClient({ region: 'us-east-1' });
-const USERS_TABLE = process.env.USERS_TABLE;
-const JWT_SECRET = process.env.JWT_SECRET;
-const BUCKET_NAME = process.env.BUCKET_NAME;
+const awsRegion = process.env.AWS_REGION;
+const userTable = process.env.USERS_TABLE;
+const jwtSecret = process.env.JWT_SECRET;
+const bucketName = process.env.BUCKET_NAME;
+
+const dynamoDB = new DynamoDBClient({ region: awsRegion });
 
 export const userProfile = async (event) => {
     const token = event.headers.Authorization.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, jwtSecret);
         const userEmail = decoded.email;
 
         const params = {
-            TableName: USERS_TABLE,
+            TableName: userTable,
             Key: {
                 email: { S: userEmail },
             },
@@ -32,7 +34,7 @@ export const userProfile = async (event) => {
         const userData = unmarshall(Item); // Convert the DynamoDB item to a regular object
 
         // Construct the full URL for the profile image
-        const profileImageUrl = `https://${BUCKET_NAME}.s3.us-east-1.amazonaws.com/${userData.profileImage}`;
+        const profileImageUrl = `https://${bucketName}.s3.us-east-1.amazonaws.com/${userData.profileImage}`;
 
         return {
             statusCode: 200,
