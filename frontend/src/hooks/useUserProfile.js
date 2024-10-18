@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../config/api'; // Adjust the import path as necessary
+import { API_ENDPOINTS } from '../config/api';
 
 const useUserProfile = () => {
     const [userData, setUserData] = useState(null);
@@ -24,7 +24,6 @@ const useUserProfile = () => {
         fetchUserData();
     }, []);
 
-    // Return both the user data and a function to refetch it
     return { userData, refetchUserData: fetchUserData, loading };
 };
 

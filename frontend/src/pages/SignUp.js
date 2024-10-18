@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
-import { useTheme } from '../context/ThemeContext'; // Import useTheme
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { signUpUser } from '../services/userService';
+import { useTheme } from '../context/ThemeContext';
 import '../App.css';
 
 const SignUp = () => {
-  const theme = useTheme(); // Get the current theme
-  const navigate = useNavigate(); // Initialize useNavigate for navigation
+  const theme = useTheme();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: '',
     profileImage: null,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,56 +26,72 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      // Step 1: Send user data to the backend (without image)
-      const { data } = await axios.post('http://localhost:5050/dev/signup', {
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        fileName: formData.profileImage.name
-      });
+      const { email, password, name, profileImage } = formData;
 
-      const { preSignedUrl, imageKey } = data;
-
-      // Step 2: Upload the image to S3 using the pre-signed URL
-      if (formData.profileImage && preSignedUrl) {
-        await axios.put(preSignedUrl, formData.profileImage, {
-          headers: {
-            'Content-Type': formData.profileImage.type
-          }
-        });
-
-        console.log('Image uploaded successfully!');
-      }
+      await signUpUser({ email, password, name, profileImage });
 
       navigate('/login');
-    } catch (err) {
-      console.error('Error during sign up:', err);
+    } catch (error) {
+      console.error('Error during sign up:', error.response?.data?.message || error.message);
+      setError(error.response?.data?.message || 'Sign up failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
       <div className="container">
         <h2 style={{ color: theme.primary }}>Sign Up</h2>
+        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error message */}
         <form onSubmit={handleSubmit}>
-          <div>
+          <div style={{ marginBottom: '20px' }}>
             <label>Name:</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+            <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+            />
           </div>
-          <div>
+          <div style={{ marginBottom: '20px' }}>
             <label>Email:</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+            <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+            />
           </div>
-          <div>
+          <div style={{ marginBottom: '20px' }}>
             <label>Password:</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+            <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+            />
           </div>
-          <div>
+          <div style={{ marginBottom: '20px' }}>
             <label>Profile Image:</label>
-            <input type="file" name="profileImage" onChange={handleFileChange} />
+            <input
+                type="file"
+                name="profileImage"
+                onChange={handleFileChange}
+            />
           </div>
-          <button style={{ backgroundColor: theme.primary }} type="submit">Sign Up</button>
+          <button
+              style={{ backgroundColor: theme.primary }}
+              type="submit"
+              disabled={loading}
+          >
+            {loading ? 'Signing up...' : 'Sign Up'}
+          </button>
         </form>
       </div>
   );
