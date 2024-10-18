@@ -5,11 +5,10 @@ import jwt from 'jsonwebtoken';
 const dynamoDB = new DynamoDBClient({region: 'us-east-1'});
 const JWT_SECRET = process.env.JWT_SECRET
 
-export const login = async (event) => {
+export const login = async (event) => {git a
     const {email, password} = JSON.parse(event.body);
 
     try {
-        // Step 1: Check if user exists in DynamoDB
         const userCheckParams = {
             TableName: process.env.USERS_TABLE,
             Key: {email: {S: email},},
@@ -24,7 +23,6 @@ export const login = async (event) => {
             };
         }
 
-        // Step 2: Compare provided password with the stored hashed password
         const validPassword = await bcrypt.compare(password, Item.password.S);
         if (!validPassword) {
             return {
@@ -33,7 +31,6 @@ export const login = async (event) => {
             };
         }
 
-        // Step 3: Generate JWT token
         const token = jwt.sign({email: email}, JWT_SECRET, {expiresIn: '1h'});
 
         return {

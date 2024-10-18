@@ -11,26 +11,23 @@ const USERS_TABLE = process.env.USERS_TABLE;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export const uploadImage = async (event) => {
-    const token = event.headers.Authorization.split(' ')[1]; // Extract token from Authorization header
+    const token = event.headers.Authorization.split(' ')[1];
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const userEmail = decoded.email; // Get the email from token
+        const userEmail = decoded.email;
 
-        // Extract fileName from request
         const { fileName } = JSON.parse(event.body);
-        const imageKey = `profile-images/${userEmail}/${fileName}`; // Store images in a user-specific folder
+        const imageKey = `profile-images/${userEmail}/${fileName}`;
 
-        // Step 1: Create pre-signed URL for S3 upload
         const command = new PutObjectCommand({
             Bucket: BucketName,
             Key: imageKey,
-            ContentType: 'image/jpeg', // Adjust according to your needs
+            ContentType: 'image/jpeg',
         });
 
         const preSignedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
-        // Step 2: Update the user's profileImage in DynamoDB
         const updateParams = {
             TableName: USERS_TABLE,
             Key: {
@@ -38,7 +35,7 @@ export const uploadImage = async (event) => {
             },
             UpdateExpression: 'SET profileImage = :newImage',
             ExpressionAttributeValues: {
-                ':newImage': { S: imageKey }, // Update with new image key
+                ':newImage': { S: imageKey },
             },
         };
 
