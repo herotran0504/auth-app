@@ -1,19 +1,38 @@
+# Step 0
+# install serverless for
+# install npm
+
+# Step 1
+# Clone source code both BE and FE
+
+## Step 2
+# build with npm
+# deploy be code and get api url
+
+# Step 3
+# attach url from backend to .env
+# build with npm
+# sync all step to S3
+# get cloudfront url
+
+GITHUB_REPO_URL=https://github.com/herotran0504/auth-app.git
+#****************************************************************#
 STACK_NAME=auth-service-fe
 REGION=us-east-1
 CLI_PROFILE=user1
-
 S3_BUCKET_NAME=hs-frontend-final-bucket
-GITHUB_REPO_URL=https://github.com/herotran0504/auth-app.git
-LOCAL_DIR=./auth-app
-FOLDER_TO_COPY=build
-API_URL=https://2bgz7znrr7.execute-api.us-east-1.amazonaws.com/dev
+#****************************************************************#
 
-#echo -e "\n\n=========== Deploying main.yml ==========="
+LOCAL_DIR=./auth-app
+#API_URL=http://localhost:5050/dev
+API_URL=https://9g0a72d0q9.execute-api.us-east-1.amazonaws.com/dev
+
+#echo -e "\n\n=========== Deploying frontend ==========="
 #aws cloudformation deploy \
 #  --region $REGION \
 #  --profile $CLI_PROFILE \
 #  --stack-name $STACK_NAME \
-#  --template-file main.yml \
+#  --template-file frontend/frontend.yml \
 #  --no-fail-on-empty-changeset \
 #  --capabilities CAPABILITY_NAMED_IAM \
 #  --parameter-overrides S3BucketName=$S3_BUCKET_NAME \
