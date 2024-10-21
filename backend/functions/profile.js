@@ -1,6 +1,7 @@
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import jwt from 'jsonwebtoken';
+import {buildResponse} from "./response.js";
 
 const awsRegion = process.env.AWS_REGION;
 const userTable = process.env.USERS_TABLE;
@@ -31,24 +32,20 @@ export const userProfile = async (event) => {
             };
         }
 
-        const userData = unmarshall(Item); // Convert the DynamoDB item to a regular object
+        const userData = unmarshall(Item);
 
-        // Construct the full URL for the profile image
         const profileImageUrl = `https://${bucketName}.s3.us-east-1.amazonaws.com/${userData.profileImage}`;
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                name: userData.name,
-                email: userData.email,
-                profileImage: profileImageUrl, // Return the full image URL
-            }),
+        const responseBody = {
+            name: userData.name,
+            email: userData.email,
+            profileImage: profileImageUrl
         };
+
+        return buildResponse(200, responseBody);
     } catch (error) {
         console.error('Error fetching user profile:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: 'Error fetching user profile' }),
-        };
+        const errorResponse = {message: 'Internal Server Error'};
+        return buildResponse(500, errorResponse);
     }
 };

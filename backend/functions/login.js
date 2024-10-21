@@ -1,6 +1,7 @@
 import {DynamoDBClient, GetItemCommand} from '@aws-sdk/client-dynamodb';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import {buildResponse} from "./response.js";
 
 const awsRegion = process.env.AWS_REGION;
 const dynamoDB = new DynamoDBClient({region: awsRegion});
@@ -34,15 +35,15 @@ export const login = async (event) => {
 
         const token = jwt.sign({email: email}, jwtSecret, {expiresIn: '1h'});
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({message: 'Login successful', token}),
+        const responseBody = {
+            message: 'Login successful',
+            token: token,
         };
+
+        return buildResponse(200, responseBody);
     } catch (error) {
         console.error('Error in login:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({message: 'Internal server error'}),
-        };
+        const errorResponse = {message: 'Internal Server Error'};
+        return buildResponse(500, errorResponse);
     }
 };

@@ -39,10 +39,10 @@ const Login = () => {
 
   return (
       <div className="container">
-        <h2 style={{ color: theme.primary }}>Login</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error message */}
+        <h2 style={{color: theme.primary}}>Login</h2>
+        {error && <p style={{color: 'red'}}>{error}</p>} {/* Display error message */}
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{marginBottom: '20px'}}>
             <label>Email:</label>
             <input
                 type="email"
@@ -52,7 +52,7 @@ const Login = () => {
                 required
             />
           </div>
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{marginBottom: '20px'}}>
             <label>Password:</label>
             <input
                 type="password"
@@ -63,13 +63,21 @@ const Login = () => {
             />
           </div>
           <button
-              style={{ backgroundColor: theme.primary }}
+              style={{backgroundColor: theme.primary}}
               type="submit"
               disabled={loading}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        <div style={{marginTop: '30px'}}>
+          <p>
+            Don't have an account?{' '}
+            <button onClick={() => navigate('/signup')} style={{color: theme.primary, background: 'none', border: 'none', cursor: 'pointer'}}>
+              Sign up
+            </button>
+          </p>
+        </div>
       </div>
   );
 };

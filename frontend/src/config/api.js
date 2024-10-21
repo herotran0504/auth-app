@@ -1,8 +1,10 @@
-const BASE_URL = 'http://localhost:5050/dev';
-
+const API_URLS = {
+    // Replace this with the actual URL of your deployed backend
+    BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5050/dev',
+};
 export const API_ENDPOINTS = {
-    LOGIN: `${BASE_URL}/login`,
-    SIGNUP: `${BASE_URL}/signup`,
-    PROFILE: `${BASE_URL}/profile`,
-    UPLOAD_IMAGE: `${BASE_URL}/upload-image`,
+    LOGIN: `${API_URLS.BASE_URL}/login`,
+    SIGNUP: `${API_URLS.BASE_URL}/signup`,
+    PROFILE: `${API_URLS.BASE_URL}/profile`,
+    UPLOAD_IMAGE: `${API_URLS.BASE_URL}/upload-image`,
 };

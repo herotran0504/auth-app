@@ -60,11 +60,11 @@ const SignUp = () => {
 
   return (
       <div className="container">
-        <h2 style={{ color: theme.primary }}>Sign Up</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {imageError && <p style={{ color: 'red' }}>{imageError}</p>} {/* Display image error message */}
+        <h2 style={{color: theme.primary}}>Sign Up</h2>
+        {error && <p style={{color: 'red'}}>{error}</p>}
+        {imageError && <p style={{color: 'red'}}>{imageError}</p>} {/* Display image error message */}
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{marginBottom: '20px'}}>
             <label>Name:</label>
             <input
                 type="text"
@@ -74,7 +74,7 @@ const SignUp = () => {
                 required
             />
           </div>
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{marginBottom: '20px'}}>
             <label>Email:</label>
             <input
                 type="email"
@@ -84,7 +84,7 @@ const SignUp = () => {
                 required
             />
           </div>
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{marginBottom: '20px'}}>
             <label>Password:</label>
             <input
                 type="password"
@@ -94,7 +94,7 @@ const SignUp = () => {
                 required
             />
           </div>
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{marginBottom: '20px'}}>
             <label>Profile Image:</label>
             <input
                 type="file"
@@ -104,13 +104,21 @@ const SignUp = () => {
             />
           </div>
           <button
-              style={{ backgroundColor: theme.primary }}
+              style={{backgroundColor: theme.primary}}
               type="submit"
               disabled={loading}
           >
             {loading ? 'Signing up...' : 'Sign Up'}
           </button>
         </form>
+        <div style={{marginTop: '30px'}}>
+          <p>
+            Already have an account?{' '}
+            <button onClick={() => navigate('/login')} style={{color: theme.primary, background: 'none', border: 'none', cursor: 'pointer'}}>
+              Log in
+            </button>
+          </p>
+        </div>
       </div>
   );
 };
