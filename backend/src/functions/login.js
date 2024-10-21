@@ -1,5 +1,5 @@
 import {DynamoDBClient, GetItemCommand} from '@aws-sdk/client-dynamodb';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import {buildResponse} from "./response.js";
 
@@ -8,6 +8,7 @@ const dynamoDB = new DynamoDBClient({region: awsRegion});
 const jwtSecret = process.env.JWT_SECRET
 
 export const login = async (event) => {
+    console.log('Received login event:', event);
     const {email, password} = JSON.parse(event.body);
 
     try {

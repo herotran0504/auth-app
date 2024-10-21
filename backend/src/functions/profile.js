@@ -11,8 +11,10 @@ const bucketName = process.env.BUCKET_NAME;
 const dynamoDB = new DynamoDBClient({ region: awsRegion });
 
 export const userProfile = async (event) => {
-    const token = event.headers.Authorization.split(' ')[1];
+    console.log('Received profile event:', event);
 
+    const token = event.headers.Authorization.split(' ')[1];
+    console.log('token:', token);
     try {
         const decoded = jwt.verify(token, jwtSecret);
         const userEmail = decoded.email;

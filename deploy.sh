@@ -1,21 +1,23 @@
-STACK_NAME=auth-service-dev
+STACK_NAME=auth-service-fe
 REGION=us-east-1
 CLI_PROFILE=user1
 
 S3_BUCKET_NAME=hs-frontend-final-bucket
 GITHUB_REPO_URL=https://github.com/herotran0504/auth-app.git
-LOCAL_DIR=./frontendbuild
-FOLDER_TO_COPY=frontend/build
+LOCAL_DIR=./auth-app
+FOLDER_TO_COPY=build
+API_URL=https://2bgz7znrr7.execute-api.us-east-1.amazonaws.com/dev
 
-echo -e "\n\n=========== Deploying main.yml ==========="
-aws cloudformation deploy \
-  --region $REGION \
-  --profile $CLI_PROFILE \
-  --stack-name $STACK_NAME \
-  --template-file main.yml \
-  --no-fail-on-empty-changeset \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides S3BucketName=$S3_BUCKET_NAME
+#echo -e "\n\n=========== Deploying main.yml ==========="
+#aws cloudformation deploy \
+#  --region $REGION \
+#  --profile $CLI_PROFILE \
+#  --stack-name $STACK_NAME \
+#  --template-file main.yml \
+#  --no-fail-on-empty-changeset \
+#  --capabilities CAPABILITY_NAMED_IAM \
+#  --parameter-overrides S3BucketName=$S3_BUCKET_NAME \
+#  --debug
 
 # If the deploy succeeded, clone the repository and upload build folder to the S3 bucket
 if [ $? -eq 0 ]; then
@@ -25,12 +27,26 @@ if [ $? -eq 0 ]; then
     echo "Created directory $LOCAL_DIR."
   fi
 
-  echo -e "\n\n=========== Cloning repository ==========="
-  git clone $GITHUB_REPO_URL $LOCAL_DIR
+echo -e "\n\n=========== Cloning repository ==========="
+git clone $GITHUB_REPO_URL $LOCAL_DIR
 
+# Navigate to the frontend directory
+cd $LOCAL_DIR/frontend || exit
 
-  echo -e "\n\n=========== Uploading $FOLDER_TO_COPY to S3 bucket ==========="
-  aws s3 cp $LOCAL_DIR/$FOLDER_TO_COPY/ s3://$S3_BUCKET_NAME/ --recursive --profile $CLI_PROFILE
+# Create or update the .env file with the REACT_APP_API_URL variable
+echo "REACT_APP_API_URL=$API_URL" > .env
+
+# Install dependencies and build the frontend project
+echo -e "\n\n=========== Installing dependencies and building the frontend project ==========="
+npm install
+npm run build
+
+# Return to the previous directory
+cd - || exit
+
+echo -e "\n\n=========== Uploading build output to S3 bucket ==========="
+# Adjust the path to the build output folder as needed (e.g., `build` or `dist`)
+aws s3 cp $LOCAL_DIR/frontend/build/ s3://$S3_BUCKET_NAME/ --recursive --profile $CLI_PROFILE
 
   # Show the CloudFront URL
   aws cloudformation list-exports \

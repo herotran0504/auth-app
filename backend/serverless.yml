@@ -1,36 +1,184 @@
-service: auth-service
+service: auth-service-be
+
+custom:
+  bucket: auth-service-be-dev-profile-images
+  table: hs-user-table
 
 provider:
   name: aws
   runtime: nodejs20.x
   stage: dev
   region: us-east-1
+  iamRoleStatements:
+    # Full access to S3
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource: "*"
+
+    # Full access to DynamoDB
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+      Resource: "arn:aws:dynamodb:*:*:table/*"
+
+    # Full access to API Gateway
+    - Effect: "Allow"
+      Action:
+        - "apigateway:*"
+      Resource: "*"
+
   environment:
-    USERS_TABLE: hs-user-table
-    BUCKET_NAME: hs-image-stores
+    USERS_TABLE: ${self:custom.table}
+    BUCKET_NAME: ${self:custom.bucket}
     JWT_SECRET: "72b38ada20b50851ffb00c3ff2a99d8812f50ef139dc7b80bcd8125a20b555d31222b2cb2ab67834f75e8fdbaa6995a9eb3259b161ea04fe025a1a563ddc903d5b687d94e0b7636ae94513ba06610abf9e2ab950a79fa5f4d3034bf8f31ed7e5878b29b11f33934b1fdce26c4bf2567fd2f1262ae92afd0ce176028a0f5b8e8a4a7eb2ba5f8fdbde461e4b17a3b12b5339b36f85b56c6c3fb13cc868039500af87830a81b11051f99b9704b564e3a25e7db7345fcad88138cd3fee1d976b769b5c5082cd057f597ccdff6f61d7e25283b63c2a516a201ae904129077e3f1d6a4844acbddfb0519dc5a4cff9968c7bbb7f2c8d0d603035f78dc23c338aa055289204071186cae749c330787eb1cf722f760f8f9b7c5cc0710876f10bdd21b29caedaec7c1f20a7cc7798f4e76034bdc78a21ce350da32213359fa10d2e2f8d4fa8a122c2c76ab646d1bcb8483fef3479290796211804d476e8ca2a856b39bc29ea1c6f41f11ef82317119b5d5ab7f7e6b8fd9e613dbe659de26070bf75bb9e5dd69284c87605dc604264c53217e1170957486fcfefc2574536228a9aefbab476357c5ab288a89e40d437b5116a368609d2f47b9e629dfdcca3073af50656c83e5763b4dbda4270caa9a55258db3e2b10b7fdb82b41b533f045e2f4aa234064f007b5ef62846a7bc44e6ecda7caad73ead18eb15c3695789d0adbbf20697aae4bd"
+
+functions:
+  signup:
+    handler: src/functions/signup.signup
+    events:
+      - http:
+          path: signup
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  uploadImage:
+    handler: src/functions/uploadImage.uploadImage
+    events:
+      - http:
+          path: upload-image
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  login:
+    handler: src/functions/login.login
+    events:
+      - http:
+          path: login
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  profile:
+    handler: src/functions/profile.userProfile
+    events:
+      - http:
+          path: profile
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
 resources:
   Resources:
-    # S3 Bucket for image storage
-    S3Bucket:
-      Type: AWS::S3::Bucket
+
+    ImageStorageBucket:
+      Type: "AWS::S3::Bucket"
       Properties:
-        BucketName: hs-image-stores
+        BucketName: !Sub "${AWS::StackName}-profile-images"
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
         CorsConfiguration:
           CorsRules:
             - AllowedOrigins:
-                - '*'
+                - "*"
               AllowedMethods:
                 - GET
                 - PUT
                 - POST
+                - DELETE
                 - HEAD
               AllowedHeaders:
-                - '*'   # Allows all headers
-              MaxAge: 2000
+                - "*"
+              MaxAge: 3000
 
-    # DynamoDB Table for user data
+    ImageStorageBucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket: !Ref ImageStorageBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal: "*"
+              Action:
+                - "s3:GetObject"
+                - "s3:PutObject"
+              Resource: !Sub "${ImageStorageBucket.Arn}/*"
+
+    # Lambda Execution Role with full access to DynamoDB and S3
+    LambdaExecutionRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: "userService-lambda-role"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service: "lambda.amazonaws.com"
+              Action: "sts:AssumeRole"
+        Policies:
+          - PolicyName: "LambdaAllS3AndDynamoDBPolicy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                # Full access to all DynamoDB tables
+                - Effect: "Allow"
+                  Action:
+                    - "dynamodb:*"
+                  Resource: "arn:aws:dynamodb:*:*:table/*"
+                # Full access to all S3 buckets
+                - Effect: "Allow"
+                  Action:
+                    - "s3:GetObject"
+                    - "s3:PutObject"
+                    - "s3:DeleteObject"
+                  Resource: "arn:aws:s3:::*"
+                # Permissions for CloudWatch Logs (for Lambda logging)
+                - Effect: "Allow"
+                  Action:
+                    - "logs:CreateLogGroup"
+                    - "logs:CreateLogStream"
+                    - "logs:PutLogEvents"
+                  Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -46,48 +194,15 @@ resources:
 plugins:
   - serverless-offline
 
-functions:
-  signup:
-    handler: src/functions/signup.signup
-    events:
-      - http:
-          path: signup
-          method: post
-          cors: true
-
-  uploadImage:
-    handler: src/functions/uploadImage.uploadImage
-    events:
-      - http:
-          path: upload-image
-          method: post
-          cors: true
-
-  login:
-    handler: src/functions/login.login
-    events:
-      - http:
-          path: login
-          method: post
-          cors: true
-
-  profile:
-    handler: src/functions/profile.userProfile
-    events:
-      - http:
-          path: profile
-          method: get
-          cors: true
-
 package:
   include:
-    - src/**  # Include all JS files in the src folder
-  exclude:
+    - src/**
     - node_modules/**
+  exclude:
     - test/**
     - README.md
 
 outputs:
   ApiGatewayEndpoint:
-    Description: "API Gateway endpoint URL for Prod stage"
-    Value: !Sub "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStage}/"
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${AWS::StackName}/"
