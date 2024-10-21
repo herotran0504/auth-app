@@ -1,10 +1,10 @@
-STACK_NAME=hs-final-s3-stack
+STACK_NAME=auth-service-dev
 REGION=us-east-1
-CLI_PROFILE=hs-final-profile
+CLI_PROFILE=user1
 
 S3_BUCKET_NAME=hs-frontend-final-bucket
 GITHUB_REPO_URL=https://github.com/herotran0504/auth-app.git
-LOCAL_DIR=./buildfolder
+LOCAL_DIR=./frontendbuild
 FOLDER_TO_COPY=frontend/build
 
 echo -e "\n\n=========== Deploying main.yml ==========="
