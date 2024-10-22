@@ -15,5 +15,5 @@ phases:
 
 artifacts:
   files:
-    - build/**/*      # Adjust based on your build output folder
+    - build/**/*
   discard-paths: yes
