@@ -10,11 +10,15 @@ The Auth App Backend provides user authentication and profile management service
 - Image Uploads
 
 ## Technologies
-- Node.js
-- AWS Lambda
-- AWS DynamoDB
-- AWS S3 for file storage
-- AWS API Gateway
+- Node.js: JavaScript runtime environment.
+- Express: Web framework for building the API.
+- bcrypt: Secure password hashing and verification.
+- jsonwebtoken (JWT): Handles user authentication using JSON Web Tokens (JWT).
+- AWS Lambda: Serverless computing for executing backend functions.
+- DynamoDB: NoSQL database for storing user data.
+- S3: AWS service for storing user-uploaded files (e.g., profile images).
+- API Gateway: Manages API endpoints.
+- Serverless Framework: Used to deploy AWS Lambda functions for serverless architecture.
 
 ## Setup Instructions
 
