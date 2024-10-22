@@ -1,19 +1,25 @@
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      nodejs: 20
+  pre_build:
     commands:
-      - echo Installing source NPM dependencies...
-      - npm install
-
+      - echo "Starting the build process..."
+      - echo "Listing directory contents:"
+      - ls -R  # List all files and directories recursively to help with debugging
+  install:
+    commands:
+      - echo "Installing dependencies..."
+      - npm install  # Install the necessary npm packages
   build:
     commands:
-      - echo Build started on `date`
-      - npm run build
+      - echo "Building the frontend project..."
+      - npm run build  # Build the frontend project
 
 artifacts:
   files:
-    - build/**/*
-  discard-paths: yes
+    - '**/*'  # Include all files in the artifacts
+  base-directory: build  # Change this to the correct output directory if needed
+
+cache:
+  paths:
+    - node_modules/**  # Cache node_modules to speed up subsequent builds
