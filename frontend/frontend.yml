@@ -111,7 +111,7 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
                   - codebuild:BatchGetProjects
-                Resource: arn:aws:codebuild:us-east-1:677276099767:project/MyFrontendBuild
+                Resource: arn:aws:codebuild:us-east-1:677276099767:project/FrontendBuild
 
   # IAM Role for CodeBuild to access resources
   CodeBuildServiceRole:
@@ -139,7 +139,7 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
                   - codebuild:BatchGetProjects
-                Resource: arn:aws:codebuild:us-east-1:677276099767:project/MyFrontendBuild
+                Resource: arn:aws:codebuild:us-east-1:677276099767:project/FrontendBuild
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
