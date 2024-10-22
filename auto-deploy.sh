@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Constants for deployment configuration
 STACK_NAME=auth-service-fe-dev
 AWS_REGION=us-east-1
