@@ -32,7 +32,6 @@ export const signup = async (event) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('hashedPassword:', hashedPassword);
         const imageKey = `profile-images/${uuidv4()}_${fileName}`;
         console.log('imageKey:', imageKey);
         const command = new PutObjectCommand({
