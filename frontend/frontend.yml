@@ -4,50 +4,55 @@ Description: CloudFormation template to create an S3 bucket and a CloudFront dis
 Parameters:
   S3BucketName:
     Type: String
-    Description: The name of the S3 bucket to create for hosting the project
+  GitHubRepoName:
+    Type: String
+  GitHubBranchName:
+    Type: String
+  GitHubOwner:
+    Type: String
+  GitHubOAuthToken:
+    Type: String
+    NoEcho: true
 
 Resources:
-  HSS3FinalBucket:
+  MyS3FinalBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Ref S3BucketName
       AccessControl: Private
       WebsiteConfiguration:
         IndexDocument: index.html
-    DeletionPolicy: Retain
 
-  HSBucketPolicy:
+  MyBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref HSS3FinalBucket
+      Bucket: !Ref MyS3FinalBucket
       PolicyDocument:
         Statement:
           - Action: s3:GetObject
             Effect: Allow
-            Resource: !Sub ${HSS3FinalBucket.Arn}/*
+            Resource: !Sub ${MyS3FinalBucket.Arn}/*
             Principal:
-              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${HSCloudFrontOAI}
-    DeletionPolicy: Retain
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MyCloudFrontOAI}
 
-  HSCloudFrontOAI:
+  MyCloudFrontOAI:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: Access Identity for S3 bucket
-    DeletionPolicy: Retain
 
-  HSCloudFrontDistribution:
+  MyCloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
           - Id: S3Origin
-            DomainName: !GetAtt HSS3FinalBucket.DomainName
+            DomainName: !GetAtt MyS3FinalBucket.DomainName
             S3OriginConfig:
               OriginAccessIdentity: !Join
                 - ''
                 - - origin-access-identity/cloudfront/
-                  - !Ref HSCloudFrontOAI
+                  - !Ref MyCloudFrontOAI
         Enabled: true
         DefaultRootObject: index.html
         DefaultCacheBehavior:
@@ -65,11 +70,157 @@ Resources:
               Forward: none
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-    DeletionPolicy: Retain
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodePipelinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: arn:aws:s3:::*
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - codebuild:BatchGetProjects
+                Resource: arn:aws:codebuild:us-east-1:861276099700:project/MyFrontendBuild
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildServiceRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: arn:aws:s3:::*  # Adjust this to your specific S3 bucket if needed
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - codebuild:BatchGetProjects
+                Resource: arn:aws:codebuild:us-east-1:861276099700:project/MyFrontendBuild
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:us-east-1:861276099700:log-group:/aws/codebuild/MyFrontendBuild:*
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: MyFrontendBuild
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: GITHUB
+        Location: !Sub https://github.com/${GitHubOwner}/${GitHubRepoName}.git
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              commands:
+                - npm install
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            files:
+              - '**/*'
+            base-directory: build
+      Artifacts:
+        Type: S3
+        Location: !Ref S3BucketName
+        Packaging: ZIP
+        Name: build-output.zip
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        Type: LINUX_CONTAINER
+
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref S3BucketName
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHubSource
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitHubRepoName
+                Branch: !Ref GitHubBranchName
+                OAuthToken: !Ref GitHubOAuthToken
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: DeployToS3
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                BucketName: !Ref S3BucketName
+                Extract: 'true'
+              RunOrder: 1
 
 Outputs:
   CloudFrontURL:
     Description: The CloudFront distribution URL
-    Value: !Sub "https://${HSCloudFrontDistribution.DomainName}"
+    Value: !Sub "https://${MyCloudFrontDistribution.DomainName}"
     Export:
       Name: CloudFrontURL
