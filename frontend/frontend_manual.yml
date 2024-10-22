@@ -66,6 +66,16 @@ Resources:
               Forward: none
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
+        # Custom Error Response for 403 and 404
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponsePagePath: "/index.html"
+            ResponseCode: 200
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponsePagePath: "/index.html"
+            ResponseCode: 200
+            ErrorCachingMinTTL: 0
 
 Outputs:
   CloudFrontDistributionURL:
