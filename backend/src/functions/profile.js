@@ -7,6 +7,7 @@ const awsRegion = process.env.AWS_REGION;
 const userTable = process.env.USERS_TABLE;
 const jwtSecret = process.env.JWT_SECRET;
 const bucketName = process.env.BUCKET_NAME;
+const region = `s3.us-east-1`;
 
 const dynamoDB = new DynamoDBClient({ region: awsRegion });
 
@@ -36,7 +37,7 @@ export const userProfile = async (event) => {
 
         const userData = unmarshall(Item);
 
-        const profileImageUrl = `https://${bucketName}.s3.us-east-1.amazonaws.com/${userData.profileImage}`;
+        const profileImageUrl = `https://${bucketName}.${region}.amazonaws.com/${userData.profileImage}`;
 
         const responseBody = {
             name: userData.name,
