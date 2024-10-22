@@ -19,7 +19,7 @@ aws cloudformation deploy \
   --template-file frontend/frontend_manual.yml \
   --no-fail-on-empty-changeset \
   --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides S3BucketName=$S3_BUCKET_NAME
+  --parameter-overrides FrontendS3BucketName=$S3_BUCKET_NAME
 
 # Check if the deployment was successful
 if [ $? -eq 0 ]; then
